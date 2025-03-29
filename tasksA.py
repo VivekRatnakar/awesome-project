@@ -8,6 +8,12 @@ import os
 import requests
 from scipy.spatial.distance import cosine
 from dotenv import load_dotenv
+from fastapi import HTTPException
+from PIL import Image
+import pytesseract
+import sys
+sys.path.append("c:/Users/USER-PC/Documents/awesome_project/")
+from llm_utils import ask_llm
 
 load_dotenv()
 
@@ -155,8 +161,22 @@ def png_to_base64(image_path):
 #     except Exception as e:
 #         print(f"❌ Error writing {output_file}: {e}")
 
+
 def A8(filename='/data/credit_card.txt', image_path='/data/credit_card.png'):
-    # Construct the request body for the AIProxy call
+    """Extract credit card number from an image using AIProxy API"""
+    
+    # Get API token from environment variables
+    AIPROXY_TOKEN = os.getenv("AIPROXY_TOKEN")
+    if not AIPROXY_TOKEN:
+        print("❌ Missing API Token. Set AIPROXY_TOKEN environment variable.")
+        return
+
+    # Convert image to Base64
+    base64_image = png_to_base64(image_path)
+    if not base64_image:
+        return
+
+    # Construct API request body
     body = {
         "model": "gpt-4o-mini",
         "messages": [
@@ -165,12 +185,12 @@ def A8(filename='/data/credit_card.txt', image_path='/data/credit_card.png'):
                 "content": [
                     {
                         "type": "text",
-                        "text": "There is 8 or more digit number is there in this image, with space after every 4 digit, only extract the those digit number without spaces and return just the number without any other characters"
+                        "text": "There is an 8 or more digit number in this image, with space after every 4 digits. Extract only that number without spaces and return just the number without any other characters."
                     },
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/png;base64,{png_to_base64(image_path)}"
+                            "url": f"data:image/png;base64,{base64_image}"
                         }
                     }
                 ]
@@ -183,22 +203,34 @@ def A8(filename='/data/credit_card.txt', image_path='/data/credit_card.png'):
         "Authorization": f"Bearer {AIPROXY_TOKEN}"
     }
 
-    # Make the request to the AIProxy service
-    response = requests.post("http://aiproxy.sanand.workers.dev/openai/v1/chat/completions",
-                             headers=headers, data=json.dumps(body))
-    # response.raise_for_status()
+    try:
+        # Make request to AIProxy
+        response = requests.post(
+            "http://aiproxy.sanand.workers.dev/openai/v1/chat/completions",
+            headers=headers, data=json.dumps(body)
+        )
+        response.raise_for_status()  # Raise an error for HTTP issues
+        result = response.json()
 
-    # Extract the credit card number from the response
-    result = response.json()
-    # print(result); return None
-    card_number = result['choices'][0]['message']['content'].replace(" ", "")
+        # Extract card number from API response
+        card_number = result.get('choices', [{}])[0].get('message', {}).get('content', "").replace(" ", "")
 
-    # Write the extracted card number to the output file
-    with open(filename, 'w') as file:
-        file.write(card_number)
-# A8()
+        if not card_number.isdigit():
+            print("❌ No valid card number extracted.")
+            return
 
+        # Save extracted card number to a text file
+        with open(filename, 'w') as file:
+            file.write(card_number + "\n")
+        
+        print(f"✅ Credit card number saved to: {filename}")
 
+    except requests.exceptions.RequestException as e:
+        print(f"❌ API request failed: {e}")
+    except KeyError:
+        print("❌ Unexpected API response format.")
+
+# A8()  # Uncomment to run
 
 def get_embedding(text):
     headers = {
@@ -234,8 +266,12 @@ def A9(filename='/data/comments.txt', output_filename='/data/comments-similar.tx
 
     # Write the most similar pair to file
     with open(output_filename, 'w') as f:
-        f.write(most_similar[0] + '\n')
-        f.write(most_similar[1] + '\n')
+        if most_similar[0] is not None and most_similar[1] is not None:
+            f.write(most_similar[0] + '\n')
+            f.write(most_similar[1] + '\n')
+        else:
+            f.write("No similar comments found.\n")
+
 
 def A10(filename='/data/ticket-sales.db', output_filename='/data/ticket-sales-gold.txt', query="SELECT SUM(units * price) FROM tickets WHERE type = 'Gold'"):
     # Connect to the SQLite database

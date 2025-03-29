@@ -151,12 +151,12 @@ Create an index file `/data/docs/index.json` that maps each filename (without th
     )
     expected = {}
     for dir, file, text in docs:
-        # get the first line starting with #
+        title = "Untitled"  # 🔹 पहले से एक डिफ़ॉल्ट टाइटल सेट करें
         for line in text.split("\n"):
             if line.startswith("# "):
                 title = line[2:].strip()
-                break
-        expected[f"{dir}/{file}.md"] = title
+                break  # पहली हेडिंग मिलते ही लूप से बाहर निकलें
+        expected[f"{dir}/{file}.md"] = title  # अब title हमेशा असाइन होगा
     result = await read("/data/docs/index.json")
     try:
         result = json.loads(result)

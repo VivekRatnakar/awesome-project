@@ -111,8 +111,14 @@ function_definitions_llm = [
         "parameters": {
             "type": "object",
             "properties": {
-                "prettier_version": {"type": "string", "pattern": r"prettier@\d+\.\d+\.\d+"},
-                "filename": {"type": "string", "pattern": r".*/(.*\.md)"}
+                "prettier_version": {
+                    "type": "string",
+                    "pattern": "prettier@\\d+\\.\\d+\\.\\d+"
+                },
+                "filename": {
+                    "type": "string",
+                    "pattern": ".*/(.*\\.md)"
+                }
             },
             "required": ["prettier_version", "filename"]
         }
@@ -241,12 +247,12 @@ function_definitions_llm = [
             "properties": {
                 "filename": {
                     "type": "string",
-                    "pattern": r".*/(.*\.txt)",
+                    "pattern": ".*/(.*\\.txt)",
                     "default": "/data/comments.txt"
                 },
                 "output_filename": {
                     "type": "string",
-                    "pattern": r".*/(.*\.txt)",
+                    "pattern": ".*/(.*\\.txt)",
                     "default": "/data/comments-similar.txt"
                 }
             },

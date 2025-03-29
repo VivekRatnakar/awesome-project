@@ -20,6 +20,7 @@ import time
 from PIL import Image, ImageDraw, ImageFont
 from faker import Faker
 
+
 config = {"root": "/data"}
 
 
@@ -216,7 +217,7 @@ def a8_credit_card_image():
 
     # Use a larger font for credit card number, simplifying OCR
     large_font = ImageFont.load_default()
-    large_font.size = 60
+    large_font = ImageFont.truetype("arial.ttf", 60)
 
     # Format credit card number with spaces
     cc_number = " ".join([data["number"][i : i + 4] for i in range(0, 16, 4)])
