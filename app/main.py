@@ -78,6 +78,15 @@ load_dotenv()
 #     else:
 #         return JSONResponse(content={"error": "Failed to get response", "details": response.text}, status_code=response.status_code)
 
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "FastAPI is running successfully!"}
+
+
 @app.get("/ask")
 def ask(prompt: str):
     result = get_completions(prompt)

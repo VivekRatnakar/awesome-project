@@ -1,23 +1,44 @@
-FROM python:3.12-slim-bookworm
+FROM ubuntu:22.04
 
-# Install dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Download and install uv
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
-RUN sh /uv-installer.sh && rm /uv-installer.sh
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-dev \
+    git \
+    curl \
+    wget \
+    sqlite3 \
+    ffmpeg \
+    imagemagick \
+    build-essential \
+    libpq-dev \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install FastAPI and Uvicorn
-RUN pip install fastapi uvicorn
+# Upgrade pip and install dependencies from requirements.txt
+RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Ensure the installed binary is on the `PATH`
-ENV PATH="/root/.local/bin:$PATH"
-
-# Set up the application directory
+# Set working directory
 WORKDIR /app
 
-# Copy application files
-COPY app.py /app
+# Copy entire project (including app/, static/, and other scripts)
+COPY . .
 
-# Explicitly set the correct binary path and use `sh -c`
-CMD ["/root/.local/bin/uv", "run", "app.py"]
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose port for FastAPI
+EXPOSE 8000
+
+# Set environment variables
+ARG AIPROXY_TOKEN
+ENV AIPROXY_TOKEN=${AIPROXY_TOKEN}
+ENV PIP_ROOT_USER_ACTION=ignore
+
+# Run application with Uvicorn
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
