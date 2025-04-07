@@ -28,7 +28,7 @@ def B3(url, save_path):
 
 # B5: Run SQL Query
 def B5(db_path, query, output_filename):
-    if not B12(db_path):
+    if not B12(db_path) or not B12(output_filename):
         return None
     import sqlite3, duckdb
     conn = sqlite3.connect(db_path) if db_path.endswith('.db') else duckdb.connect(db_path)
@@ -40,8 +40,11 @@ def B5(db_path, query, output_filename):
         file.write(str(result))
     return result
 
+
 # B6: Web Scraping
 def B6(url, output_filename):
+    if not B12(output_filename):
+        return None
     import requests
     result = requests.get(url).text
     with open(output_filename, 'w') as file:
