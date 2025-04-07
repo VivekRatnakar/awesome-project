@@ -278,16 +278,21 @@ def A10(filename='/data/ticket-sales.db', output_filename='/data/ticket-sales-go
     conn = sqlite3.connect(filename)
     cursor = conn.cursor()
 
-    # Calculate the total sales for the "Gold" ticket type
-    cursor.execute(query)
-    total_sales = cursor.fetchone()[0]
+    try:
+        cursor.execute(query)
+        result = cursor.fetchone()
 
-    # If there are no sales, set total_sales to 0
-    total_sales = total_sales if total_sales else 0
+        # If result is None or contains None, write 0
+        total_sales = result[0] if result and result[0] is not None else 0
 
-    # Write the total sales to the file
-    with open(output_filename, 'w') as file:
-        file.write(str(total_sales))
+        with open(output_filename, 'w') as f:
+            f.write(str(total_sales) + '\n')
 
-    # Close the database connection
-    conn.close()
+        print(f"✅ Gold ticket sales written to: {output_filename}")
+
+    except Exception as e:
+        print(f"❌ Error executing query: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
